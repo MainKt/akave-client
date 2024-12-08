@@ -1,19 +1,25 @@
 import { useState, useEffect } from "react";
-import ListImage from "./ListImage";
 
 const FileUpload = () => {
     const [file, setFile] = useState(null);
     const [status, setStatus] = useState(""); // For showing success/failure status
     const [bucketName, setBucketName] = useState(""); // To store the bucket name
     const [rememberBucket, setRememberBucket] = useState(false); // To store the checkbox state
+    const [fetchedImages, setFetchedImages] = useState([]); // To store fetched image URLs
+    const [fetchError, setFetchError] = useState(null); // Error for fetching images
 
-    // Check if a bucket name is stored in localStorage
+    // Load bucket name from localStorage
     useEffect(() => {
         const savedBucketName = localStorage.getItem("bucketName");
         if (savedBucketName) {
             setBucketName(savedBucketName);
             setRememberBucket(true);
         }
+    }, []);
+
+    // Fetch all image URLs on component mount
+    useEffect(() => {
+        getAllTheImageUrl();
     }, []);
 
     const handleFileChange = (event) => {
@@ -26,56 +32,76 @@ const FileUpload = () => {
             return;
         }
 
-        // Ask for the bucket name if not already set
+        let formattedBucketName = bucketName;
         if (!bucketName) {
             const userBucketName = prompt("Please enter the bucket name:");
             if (!userBucketName) {
                 setStatus("Bucket name is required.");
                 return;
             }
-            // Replace spaces with hyphens
-            const formattedBucketName = userBucketName.replace(/\s+/g, "-");
-            setBucketName(formattedBucketName);
+            formattedBucketName = userBucketName.replace(/\s+/g, "-");
         } else {
-            // Replace spaces with hyphens if bucket name exists
-            setBucketName(bucketName.replace(/\s+/g, "-"));
+            formattedBucketName = bucketName.replace(/\s+/g, "-");
         }
 
-        // Save bucket name to localStorage if checkbox is checked
+        setBucketName(formattedBucketName);
+
         if (rememberBucket) {
-            localStorage.setItem("bucketName", bucketName);
+            localStorage.setItem("bucketName", formattedBucketName);
         } else {
             localStorage.removeItem("bucketName");
         }
 
         const formData = new FormData();
         formData.append("file", file);
+        formData.append("bucket", formattedBucketName);
 
         try {
-            const response = await fetch("http://localhost:3001/", {
+            const response = await fetch("http://localhost:4000/upload/images", {
                 method: "POST",
                 body: formData,
             });
 
             if (response.ok) {
                 setStatus("File uploaded successfully!");
+                getAllTheImageUrl(); // Refresh images after upload
             } else {
                 setStatus("Failed to upload the file.");
             }
-        } catch (e) {
-            setStatus("An error occurred while uploading the file." + e);
+        } catch (error) {
+            setStatus(`An error occurred while uploading the file: ${error.message}`);
         }
     };
 
-    const images = [
-        "https://images.unsplash.com/photo-1730818203797-897b2838105a?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8YXBwJTIwd2FsbHBhcGVyfGVufDB8fDB8fHww",
-        "https://images.unsplash.com/photo-1730818203797-897b2838105a?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8YXBwJTIwd2FsbHBhcGVyfGVufDB8fDB8fHww",
-    ];
+    const getAllTheImageUrl = async () => {
+        try {
+            const response = await fetch("http://localhost:4000/files/images");
+            if (response.ok) {
+                const data = await response.json();
+                const images = data.files.map((file) => ({
+                    name: file.Name,
+                    url: file.URL,
+                }));
+                setFetchedImages(images); // Set the images in state
+                setFetchError(null);
+            } else {
+                setFetchError("Failed to fetch images.");
+            }
+        } catch (error) {
+            setFetchError(`An error occurred while fetching images: ${error.message}`);
+        }
+    };
 
     return (
         <div
             className="upload-container"
-            style={{ padding: "1rem", border: "1px solid #ccc", borderRadius: "5px", maxWidth: "400px" }}
+            style={{
+                padding: "1rem",
+                border: "1px solid #ccc",
+                borderRadius: "5px",
+                maxWidth: "400px",
+                margin: "auto",
+            }}
         >
             <h3>Upload a File</h3>
             <input type="file" onChange={handleFileChange} style={{ margin: "1rem 0" }} />
@@ -120,32 +146,41 @@ const FileUpload = () => {
                 </div>
             )}
 
-            <div
-                style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    height: "100vh",
-                    backgroundColor: "#242424",
-                    padding: "20px",
-                    boxSizing: "border-box",
-                }}
-            >
-                <h1 style={{ color: "white", fontFamily: "'Roboto', sans-serif" }}>Image Gallery</h1>
-                <div
-                    style={{
-                        border: "2px solid #ccc",
-                        borderRadius: "8px",
-                        padding: "20px",
-                        backgroundColor: "#242424",
-                        boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
-                        width: "80%",
-                        maxWidth: "1000px",
-                    }}
-                >
-                    <ListImage images={images} bucketName={bucketName} />
-                </div>
+            <div style={{ marginTop: "2rem" }}>
+                <h1>Image Gallery</h1>
+                {fetchError ? (
+                    <p style={{ color: "red" }}>{fetchError}</p>
+                ) : fetchedImages.length > 0 ? (
+                    <div
+                        style={{
+                            display: "flex",
+                            flexWrap: "wrap",
+                            gap: "10px",
+                            justifyContent: "center",
+                        }}
+                    >
+                        {fetchedImages.map((image, index) => (
+                            <div
+                                key={index}
+                                style={{
+                                    border: "1px solid #ddd",
+                                    borderRadius: "5px",
+                                    padding: "10px",
+                                    textAlign: "center",
+                                }}
+                            >
+                                <img
+                                    src={image.url}
+                                    alt={image.name}
+                                    style={{ maxWidth: "100px", maxHeight: "100px" }}
+                                />
+                                <p style={{ fontSize: "12px", wordBreak: "break-all" }}>{image.name}</p>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <p>No images found.</p>
+                )}
             </div>
         </div>
     );
