@@ -29,7 +29,6 @@ app.get("/files/:bucket", async (req, res) => {
   try {
     const { bucket } = req.params;
     const files = await akave.listFiles(bucket);
-    console.log(files)
 
     const fileURLs = files.map(file => {
       const fileUrl = `${req.protocol}://${req.get("host")}/files/${bucket}/${file.Name}`;
@@ -45,11 +44,12 @@ app.get("/files/:bucket", async (req, res) => {
 app.get("/files/:bucket/:fileName", async (req, res) => {
   try {
     const { bucket, fileName } = req.params;
-    const fileStream = await akave.downloadFile(bucket, fileName);
 
-    res.setHeader("Content-Type", "image/jpeg");
-    fileStream.pipe(res);
+    const stream = await akave.downloadFile(bucket, fileName);
+    stream.pipe(res);
+
   } catch (error) {
+    console.error('Error processing request:', error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
@@ -57,7 +57,8 @@ app.get("/files/:bucket/:fileName", async (req, res) => {
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, async () => {
   try {
-  await akave.createBucket('images')
-  } catch(e) {}
+    await akave.createBucket('images')
+  } catch (e) { }
+
   console.log(`Server is running on port ${PORT}`);
 });
