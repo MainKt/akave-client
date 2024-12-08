@@ -1,44 +1,45 @@
 import express from "express";
 import multer from "multer";
 import akave from "akave-client";
-import fs from 'fs';
-import os from 'os';
+import fs from "fs";
+import os from "os";
+import cors from "cors";
 
 const app = express();
+app.use(cors());
 const upload = multer({ dest: os.tmpdir() });
 
-
 app.post("/upload/:bucket", upload.single("file"), async (req, res) => {
-  try {
-    const { bucket } = req.params;
+    try {
+        const { bucket } = req.params;
 
-    const filePath = req.file.path;
-    if (!filePath) return res.status(400).json({ error: "File is required" });
+        const filePath = req.file.path;
+        if (!filePath) return res.status(400).json({ error: "File is required" });
 
-    const fileStream = fs.createReadStream(filePath);
-    const result = await akave.uploadFile(bucket, fileStream);
+        const fileStream = fs.createReadStream(filePath);
+        const result = await akave.uploadFile(bucket, fileStream);
 
-    res.status(200).json({ message: "File uploaded successfully", data: result });
-  } catch (error) {
-    console.log(error)
-    res.status(500).json({ error: "Internal server error" });
-  }
+        res.status(200).json({ message: "File uploaded successfully", data: result });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ error: "Internal server error" });
+    }
 });
 
 app.get("/files/:bucket", async (req, res) => {
-  try {
-    const { bucket } = req.params;
-    const files = await akave.listFiles(bucket);
+    try {
+        const { bucket } = req.params;
+        const files = await akave.listFiles(bucket);
 
-    const fileURLs = files.map(file => {
-      const fileUrl = `${req.protocol}://${req.get("host")}/files/${bucket}/${file.Name}`;
-      return { Name: file.Name, URL: fileUrl };
-    });
+        const fileURLs = files.map((file) => {
+            const fileUrl = `${req.protocol}://${req.get("host")}/files/${bucket}/${file.Name}`;
+            return { Name: file.Name, URL: fileUrl };
+        });
 
-    res.status(200).json({ files: fileURLs });
-  } catch (error) {
-    res.status(500).json({ error: "Internal server error" });
-  }
+        res.status(200).json({ files: fileURLs });
+    } catch (error) {
+        res.status(500).json({ error: "Internal server error" });
+    }
 });
 
 app.get("/files/:bucket/:fileName", async (req, res) => {
