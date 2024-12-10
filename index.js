@@ -1,5 +1,8 @@
 import axios from "axios";
 import FormData from "form-data";
+import dotenv from 'dotenv';
+
+dotenv.config()
 
 export class Akave {
   /**
