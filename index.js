@@ -112,9 +112,9 @@ export class Akave {
  * @returns {Akave}
  */
 export function createAkaveInstance() {
-  const baseUrl = process.env.AKAVE_URL || "https://tops-gibbon-friendly.ngrok-free.app";
+  const baseUrl = process.env.AKAVE_URL;
 
-  if (!baseUrl) throw new Error("Base URL is not defined in the environment variables");
+  if (!baseUrl) throw new Error("AKAVE_URL environment variable is not set!");
 
   return new Akave(baseUrl);
 }
