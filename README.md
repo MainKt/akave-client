@@ -98,6 +98,5 @@ try {
 - `AKAVE_BASE_URL`: Base URL for the Akave Link API
 
 ## Notes
-- Requires `axios` and `form-data` dependencies
 - All methods return Promises
 - File upload requires a ReadStream
