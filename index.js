@@ -80,7 +80,7 @@ export class Akave {
    */
   async downloadFile(bucket, fileName) {
     const response = await this.client.get(`/buckets/${bucket}/files/${fileName}/download`, {
-      responseType: "blob",
+      responseType: "stream",
     });
 
     return response.data;
