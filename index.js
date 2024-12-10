@@ -112,9 +112,9 @@ export class Akave {
  * @returns {Akave}
  */
 export function createAkaveInstance() {
-  const baseUrl = process.env.AKAVE_URL;
+  const baseUrl = process.env.AKAVE_BASE_URL;
 
-  if (!baseUrl) throw new Error("AKAVE_URL environment variable is not set!");
+  if (!baseUrl) throw new Error("AKAVE_BASE_URL environment variable is not set!");
 
   return new Akave(baseUrl);
 }

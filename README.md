@@ -18,7 +18,7 @@ import akave, { Akave, createAkaveInstance } from 'akave-client';
 ## Configuration
 Set the Akave URL via environment variable:
 ```bash
-AKAVE_URL=https://your-akave-endpoint.com
+AKAVE_BASE_URL=https://your-akave-endpoint.com
 ```
 
 ## API Methods
@@ -95,7 +95,7 @@ try {
 ```
 
 ## Environment Variables
-- `AKAVE_URL`: Base URL for the Akave Link API (defaults to ngrok endpoint)
+- `AKAVE_BASE_URL`: Base URL for the Akave Link API
 
 ## Notes
 - Requires `axios` and `form-data` dependencies
